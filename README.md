@@ -61,19 +61,31 @@ You can fully customize logging behavior using individual setup functions:
 ```go
 package main
 
-import "github.com/dozerokz/logger"
+import (
+	"os"
+	"path/filepath"
+
+	"github.com/dozerokz/logger"
+)
 
 func main() {
+	// Set levels separately
 	logger.SetConsoleLevel(logger.INFO)
 	logger.SetFileLevel(logger.DEBUG)
-	
-	err := logger.SetLogFile("logs/app.log")
+
+	// Use a custom log directory
+	_ = os.MkdirAll("logs", 0755)
+	err := logger.SetLogFile(filepath.Join("logs", "custom.log"))
 	if err != nil {
 		panic(err)
 	}
 	defer logger.Close()
 
-	logger.Info("Logging initialized with custom path")
+	logger.Info("Custom file logger initialized")
+	logger.Debug("Detailed debug info: %s", "variable x = 42")
+	logger.Success("Task completed ✅")
+	logger.Fail("Validation failed")
+	logger.Error("Unexpected crash occurred")
 }
 ```
 
