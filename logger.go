@@ -69,10 +69,17 @@ func SetFileLevel(level LogLevel) {
 // The file is created if it doesn't exist and opened in append mode.
 func SetLogFile(path string) error {
 	var err error
+
+	dir := filepath.Dir(path)
+	if err = os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
 	logFile, err = os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
+
 	fileLogger = log.New(logFile, "", log.Ldate|log.Ltime|log.Lmicroseconds)
 	return nil
 }
