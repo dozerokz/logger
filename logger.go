@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 // LogLevel represents the severity level for logging.
@@ -57,7 +58,7 @@ func SetupLogging(consoleLogLevel, fileLogLevel LogLevel) error {
 // SetConsoleLevel sets the minimum log level for console output.
 func SetConsoleLevel(level LogLevel) {
 	consoleLevel = level
-	consoleLogger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lmicroseconds)
+	consoleLogger = log.New(os.Stdout, "", 0)
 }
 
 // SetFileLevel sets the minimum log level for file output.
@@ -69,18 +70,11 @@ func SetFileLevel(level LogLevel) {
 // The file is created if it doesn't exist and opened in append mode.
 func SetLogFile(path string) error {
 	var err error
-
-	dir := filepath.Dir(path)
-	if err = os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
 	logFile, err = os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
-
-	fileLogger = log.New(logFile, "", log.Ldate|log.Ltime|log.Lmicroseconds)
+	fileLogger = log.New(logFile, "", 0)
 	return nil
 }
 
@@ -115,9 +109,10 @@ func LogMessage(format string, level LogLevel, args ...interface{}) {
 	}
 
 	levelStr := levelToString(level)
+	now := time.Now().Format("02/01/2006 15:04:05.000000")
 
 	if shouldLog(level, fileLevel) && fileLogger != nil {
-		fileLogger.Printf("| %s | %s", levelStr, message)
+		fileLogger.Printf("%s | %s | %s", now, levelStr, message)
 	}
 
 	if shouldLog(level, consoleLevel) && consoleLogger != nil {
@@ -134,7 +129,7 @@ func LogMessage(format string, level LogLevel, args ...interface{}) {
 		default:
 			color = Yellow
 		}
-		consoleLogger.Printf("%s| %s |%s %s", color, levelStr, Reset, message)
+		consoleLogger.Printf("%s%s | %s |%s %s", color, now, levelStr, Reset, message)
 	}
 }
 
