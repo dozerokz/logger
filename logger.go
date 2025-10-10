@@ -68,13 +68,19 @@ func SetFileLevel(level LogLevel) {
 }
 
 // SetLogFile sets the path to the log file and initializes file logging.
-// The file is created if it doesn't exist and opened in append mode.
+// It creates parent directories if they do not exist.
 func SetLogFile(path string) error {
 	var err error
+	dir := filepath.Dir(path)
+	if err = os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create log directory %q: %w", dir, err)
+	}
+
 	logFile, err = os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open log file %q: %w", path, err)
 	}
+
 	fileLogger = log.New(logFile, "", 0)
 	return nil
 }
