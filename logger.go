@@ -52,7 +52,8 @@ var (
 func SetupLogging(consoleLogLevel, fileLogLevel LogLevel) error {
 	SetConsoleLevel(consoleLogLevel)
 	SetFileLevel(fileLogLevel)
-	return InitDefaultLogFile()
+	//return InitDefaultLogFile()
+	return nil
 }
 
 // SetConsoleLevel sets the minimum log level for console output.
@@ -111,6 +112,10 @@ func LogMessage(format string, level LogLevel, args ...interface{}) {
 	levelStr := levelToString(level)
 	now := time.Now().Format("02/01/2006 15:04:05.000000")
 
+	if logFile == nil && fileLogger == nil {
+		_ = InitDefaultLogFile()
+	}
+
 	if shouldLog(level, fileLevel) && fileLogger != nil {
 		fileLogger.Printf("%s | %s | %s", now, levelStr, message)
 	}
@@ -129,7 +134,7 @@ func LogMessage(format string, level LogLevel, args ...interface{}) {
 		default:
 			color = Yellow
 		}
-		consoleLogger.Printf("%s%s | %s |%s %s", color, now, levelStr, Reset, message)
+		consoleLogger.Printf("%s%s | %s |%s %s", now, color, levelStr, Reset, message)
 	}
 }
 
