@@ -37,18 +37,18 @@ package main
 import "github.com/dozerokz/logger"
 
 func main() {
-	// Initialize with console INFO level and file DEBUG level
-	err := logger.SetupLogging(logger.INFO, logger.DEBUG)
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Close()
-	
-	logger.Info("Application started")
-	logger.Debug("Some debug value: %d", 42)
-	logger.Error("Unexpected error: %v", "connection timeout")
-	logger.Success("Upload complete")
-	logger.Fail("Invalid input")
+	// Create a new logger with INFO for console, DEBUG for file
+	// Will initialize default "out.log" in working directory
+	log := logger.NewLogger(logger.INFO, logger.DEBUG)
+	defer log.Close()
+
+	log.Log(logger.INFO, "Info message: %s", "some string")
+
+	log.Info("App started")
+	log.Debug("Some internal value: %d", 123)
+	log.Success("Task completed successfully")
+	log.Fail("Validation failed on field: email")
+	log.Error("Connection error: %v", "timeout")
 }
 ```
 
@@ -62,30 +62,26 @@ You can fully customize logging behavior using individual setup functions:
 package main
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/dozerokz/logger"
 )
 
 func main() {
-	// Set levels separately
-	logger.SetConsoleLevel(logger.INFO)
-	logger.SetFileLevel(logger.DEBUG)
+	// Create a new logger with INFO to console and DEBUG to file
+	log := logger.NewLogger(logger.INFO, logger.DEBUG)
+	defer log.Close()
 
-	// Use a custom log directory
-	_ = os.MkdirAll("logs", 0755)
-	err := logger.SetLogFile(filepath.Join("logs", "custom.log"))
-	if err != nil {
+	// Set a custom log file path
+	if err := log.SetLogFile(filepath.Join("logs", "/custom.log")); err != nil {
 		panic(err)
 	}
-	defer logger.Close()
 
-	logger.Info("Custom file logger initialized")
-	logger.Debug("Detailed debug info: %s", "variable x = 42")
-	logger.Success("Task completed ✅")
-	logger.Fail("Validation failed")
-	logger.Error("Unexpected crash occurred")
+	log.Info("Custom file logger initialized")
+	log.Debug("Detailed debug info: %s", "variable x = 42")
+	log.Success("Task completed ✅")
+	log.Fail("Validation failed")
+	log.Error("Unexpected crash occurred")
 }
 ```
 
@@ -95,7 +91,7 @@ func main() {
 
 The default file path is ```out.log``` in the current working directory.
 
-You can override it with ```logger.SetLogFile("custom/path.log")```.
+You can override it with ```log.SetLogFile("custom/path.log")```.
 
 ---
 
@@ -103,9 +99,9 @@ You can override it with ```logger.SetLogFile("custom/path.log")```.
 
 You can find working examples under examples/:
 
-[logger_example.go](examples/logger_example.go) — basic usage
+[logger_example.go](examples/logger_example/main.go) — basic usage
 
-[logger_advanced.go](examples/logger_advanced.go) — custom file path, manual level config
+[logger_advanced.go](examples/logger_advanced/main.go) — custom file path, manual level config
 
 ---
 
