@@ -17,19 +17,19 @@ type LogLevel int
 const (
 	DEBUG LogLevel = iota
 	INFO
-	ERROR
 	SUCCESS
 	FAIL
+	ERROR
 	DISABLED // special level to disable output
 )
 
 // ANSI color constants for console output.
 const (
-	Reset  = "\033[0m"
-	Red    = "\033[31m"
-	Green  = "\033[32m"
-	Yellow = "\033[33m"
-	Blue   = "\033[34m"
+	reset  = "\033[0m"
+	red    = "\033[31m"
+	green  = "\033[32m"
+	yellow = "\033[33m"
+	blue   = "\033[34m"
 )
 
 // Logger provides leveled and colorized logging with optional file output.
@@ -53,19 +53,18 @@ func NewLogger(consoleLevel, fileLevel LogLevel) *Logger {
 }
 
 // initDefaultLogFile initializes a default log file named "out.log" in the working directory.
+// Must be called with l.mu held.
 func (l *Logger) initDefaultLogFile() error {
-	dir, err := getWorkingDir()
+	dir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	return l.SetLogFile(filepath.Join(dir, "out.log"))
+	return l.openLogFile(filepath.Join(dir, "out.log"))
 }
 
-// SetLogFile sets the path for the log file, creating directories if needed.
-func (l *Logger) SetLogFile(path string) error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
+// openLogFile opens (or creates) the log file at path.
+// Must be called with l.mu held.
+func (l *Logger) openLogFile(path string) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create log directory %q: %w", dir, err)
@@ -79,6 +78,13 @@ func (l *Logger) SetLogFile(path string) error {
 	l.logFile = file
 	l.file = log.New(file, "", 0)
 	return nil
+}
+
+// SetLogFile sets the path for the log file, creating directories if needed.
+func (l *Logger) SetLogFile(path string) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.openLogFile(path)
 }
 
 // Close safely closes the log file if it was opened.
@@ -97,6 +103,9 @@ func (l *Logger) Log(level LogLevel, format string, args ...interface{}) {
 	levelStr := levelToString(level)
 	now := time.Now().Format("02/01/2006 15:04:05.000000")
 
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	// Initialize default log file if file logging is not yet configured.
 	if l.logFile == nil && l.file == nil {
 		_ = l.initDefaultLogFile()
@@ -112,17 +121,17 @@ func (l *Logger) Log(level LogLevel, format string, args ...interface{}) {
 		var color string
 		switch level {
 		case DEBUG:
-			color = Yellow
+			color = yellow
 		case INFO:
-			color = Blue
-		case ERROR, FAIL:
-			color = Red
+			color = blue
 		case SUCCESS:
-			color = Green
+			color = green
+		case FAIL, ERROR:
+			color = red
 		default:
-			color = Yellow
+			color = yellow
 		}
-		l.console.Printf("%s%s | %s |%s %s", now, color, levelStr, Reset, message)
+		l.console.Printf("%s%s | %s |%s %s", now, color, levelStr, reset, message)
 	}
 }
 
@@ -173,17 +182,4 @@ func shouldLog(msgLevel, minLevel LogLevel) bool {
 		return false
 	}
 	return msgLevel >= minLevel
-}
-
-// getWorkingDir determines the working directory depending on
-// whether the binary is run via `go run` or from a compiled build.
-func getWorkingDir() (string, error) {
-	exePath, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
-	if strings.Contains(exePath, "go-build") || strings.Contains(exePath, "tmp") {
-		return os.Getwd()
-	}
-	return filepath.Dir(exePath), nil
 }
