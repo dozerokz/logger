@@ -73,7 +73,7 @@ func main() {
 	defer log.Close()
 
 	// Set a custom log file path
-	if err := log.SetLogFile(filepath.Join("logs", "/custom.log")); err != nil {
+	if err := log.SetLogFile(filepath.Join("logs", "custom.log")); err != nil {
 		panic(err)
 	}
 
