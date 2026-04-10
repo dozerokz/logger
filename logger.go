@@ -126,6 +126,14 @@ func (l *Logger) Log(level LogLevel, format string, args ...interface{}) {
 	}
 }
 
+// Write implements io.Writer, logging incoming bytes at INFO level.
+// This allows passing *Logger to frameworks that accept io.Writer (e.g. gin.DefaultWriter).
+func (l *Logger) Write(p []byte) (n int, err error) {
+	msg := strings.TrimRight(string(p), "\n")
+	l.Info("%s", msg)
+	return len(p), nil
+}
+
 // Debug logs a message at DEBUG level.
 func (l *Logger) Debug(format string, args ...interface{}) { l.Log(DEBUG, format, args...) }
 
