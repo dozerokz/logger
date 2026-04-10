@@ -95,6 +95,21 @@ You can override it with ```log.SetLogFile("custom/path.log")```.
 
 ---
 
+# Framework Integration (io.Writer)
+
+`*Logger` implements `io.Writer`, so it can be passed directly to frameworks that accept it.
+
+**Gin example:**
+```go
+log := logger.NewLogger(logger.INFO, logger.DEBUG)
+gin.DefaultWriter = log
+gin.DefaultErrorWriter = log
+```
+
+Works with any library that accepts `io.Writer` as a logger output.
+
+---
+
 # Examples
 
 You can find working examples under examples/:
